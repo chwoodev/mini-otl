@@ -58,4 +58,25 @@ export class UsersController {
   // ===========================================================================
 
   // TODO: 여기에 3개의 라우트 핸들러를 구현하세요.
+
+  @UseGuards(JwtAuthGuard)
+  @Get("profile")
+  async getProfile(@JWTUser() user: JWTPayload): Promise<UserProfileDTO> {
+    const userEntity = await this.usersService.getUserWithDeptById(user.id);
+    return toUserProfileDTO(userEntity);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("reviews")
+  async getReviews(@JWTUser() user: JWTPayload){
+    const reviews = await this.reviewsService.getReviewsOfUser(user.id);
+    return reviews.map(toReviewWithLikesDTO(user.id));
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("reviews/likes")
+  async getLikedReviews(@JWTUser() user: JWTPayload){
+    const reviews = await this.reviewsService.getReviewsLikedByUser(user.id);
+    return reviews.map(toReviewWithLikesDTO(user.id));
+  }
 }
