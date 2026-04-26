@@ -47,6 +47,32 @@ export class JwtAuthGuard extends AuthGuard(['jwt', 'refresh']) implements CanAc
   // ===========================================================================
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // TODO: 여기에 Guard 로직을 구현하세요.
-    return false;
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass()
+    ]);
+
+    const req = context.switchToHttp().getRequest();
+    const res = context.switchToHttp().getResponse();
+
+    try{
+      const auth = await super.canActivate(context);
+      if(!auth)return isPublic;
+
+      const user = req.user as JWTPayload | TokenRefreshPayload;
+
+      if('access' in user){
+        const {access, ...newPayload} = user;
+        req.user = newPayload;
+        res.cookie('jwt', access.token, access.options);
+      }
+
+      return true;
+    }catch(err) {
+      if(err instanceof RefreshTokenInvalidException)
+        throw new UnauthorizedException(err.message);
+      if(isPublic)return true;
+      throw err;
+    }
   }
 }
