@@ -16,7 +16,7 @@ export type CourseFindFilter = {
 
 @Injectable()
 export class CourseRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async getCourseWithLectures(id: number): Promise<CourseWithIncludes | null> {
     return await this.prisma.course.findUnique({
@@ -82,7 +82,28 @@ export class CourseRepository {
     userId?: number,
   ): Promise<CourseWithDept[] | CourseWithDeptAndLastSeenReview[]> {
     // TODO: 여기에 복합 필터 쿼리를 구현하세요.
-    return [];
+    const { departments, codePrefixes, keyword } = filter;
+
+    const codeFilters = codePrefixes?.map((prefix) => ({
+      courseNumCode: {
+        gte: prefix * 100,
+        lt: (prefix + 1) * 100,
+      },
+    }));
+
+    return await this.prisma.course.findMany({
+      where: {
+        AND: [
+          departments ? {departmentId: {in: departments}} : {},
+          codeFilters ? {OR: codeFilters} : {},
+          keyword ? { OR: [{ nameKo: { contains: keyword } }, { nameEn: { contains: keyword } }] } : {}
+        ]
+      },
+      include:{
+        department: true,
+        userLastSeenReviewOnCourse: userId ? {where: {userId}} : false
+      }
+    });
   }
 
   async updateCourseStats(data: CourseStatUpdateInput) {
