@@ -25,6 +25,8 @@ import { JWTPayload } from 'src/common/dto/auth/auth.dto';
 export class AdminGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
     // TODO: 요청의 user에서 isAdmin 여부를 확인하여 반환하세요.
-    return false;
+    const request = context.switchToHttp().getRequest();
+    const user: JWTPayload | undefined = request.user;
+    return !!user?.isAdmin;
   }
 }
