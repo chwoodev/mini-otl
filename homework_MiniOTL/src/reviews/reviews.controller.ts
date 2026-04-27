@@ -12,7 +12,7 @@ export class ReviewsController {
   constructor(
     private readonly reviewsService: ReviewsService,
     private readonly reportService: ReportsService,
-  ) { }
+  ) {}
 
   // ===========================================================================
   // TODO 17: ReviewsController - 리뷰 좋아요/신고 엔드포인트 구현하기
@@ -52,4 +52,28 @@ export class ReviewsController {
   // ===========================================================================
 
   // TODO: 여기에 likeReview, unlikeReview, createReport 엔드포인트를 구현하세요.
+  @UseGuards(JwtAuthGuard)
+  @Post(':reviewId/likes')
+  async likeReview(@JWTUser() user: JWTPayload, @Param('reviewId') reviewId: number) {
+    const review = await this.reviewsService.likeReview(reviewId, user.id);
+    return toReviewWithLikesDTO(user.id)(review);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':reviewId/likes')
+  async unlikeReview(@JWTUser() user: JWTPayload, @Param('reviewId') reviewId: number) {
+    const review = await this.reviewsService.unlikeReview(reviewId, user.id);
+    return toReviewWithLikesDTO(user.id)(review);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':reviewId/report')
+  async reportReview(
+    @JWTUser() user: JWTPayload,
+    @Param('reviewId') reviewId: number,
+    @Body() data: ReportCreateBodyDTO,
+  ) {
+    const review = await this.reportService.createReport({ userId: user.id, reviewId, ...data });
+    return toReportDTO(review);
+  }
 }
