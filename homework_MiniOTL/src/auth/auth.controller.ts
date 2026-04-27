@@ -70,4 +70,41 @@ export class AuthController {
   // ===========================================================================
 
   // TODO: 여기에 login, signup, toggleAdmin 엔드포인트와 setupTokens 메서드를 구현하세요.
+
+  @UseGuards(LocalAuthGuard)
+  @Post('login')
+  async login(
+    @Req() req: Request & {user: User},
+    @Res({ passthrough: true }) res: Response
+  ): Promise<UserDTO> {
+    await this.setupTokens(req.user, res);
+    return toUserDTO(req.user);
+  }
+
+  @Post('signup')
+  async signup(@Body() body: CreateUserDTO): Promise<UserDTO> {
+    const newUser = await this.usersService.createUser(body);
+    return toUserDTO(newUser);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('toggleAdmin')
+  async toggleAdmin(
+    @JWTUser() user: JWTPayload,
+    @Res({ passthrough: true }) res:Response
+  ): Promise<UserDTO> {
+    const updatedUser = await this.usersService.toggleAdmin(user.id);
+    await this.setupTokens(updatedUser, res);
+    return toUserDTO(updatedUser);
+  }
+
+  private async setupTokens(user: User, res: Response): Promise<void> {
+    const payload: JWTPayload = {id: user.id, isAdmin: user.isAdmin};
+    const access = this.authService.getAccessTokenAndOptions(payload);
+    const refresh = this.authService.getRefreshTokenAndOptions(payload);
+    this.usersService.updateRefreshToken(user.id, refresh.token);
+    res.cookie('jwt', access.token, access.options);
+    res.cookie('refresh', refresh.token, refresh.options);
+  }
+
 }
