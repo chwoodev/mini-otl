@@ -72,16 +72,38 @@ export class TimetablesService {
   // ===========================================================================
   async addLectureToTimetableForUser(userId: number, timetableId: number, lectureId: number) {
     // TODO: 여기에 시간표에 강의 추가 로직을 구현하세요.
+    const [timetable, lecture] = await Promise.all([
+      this.timetableRepository.getTimetableWithLectureTimesById(timetableId),
+      this.lecturesService.getLectureWithClasstimesById(lectureId)
+    ]);
+
+    if(!timetable || timetable.userId != userId) 
+      throw new NotFoundException('Timetable not found');
+    if(timetable.year !== lecture.year || timetable.season !== lecture.season)
+      throw new BadRequestException('Can only add lectures on same semester to timetable');
+    if(timetable.lectures.some(x => x.id === lectureId))
+      throw new BadRequestException('Lecture already in timetable');
+    if(this.checkLectureTimeConflict(lecture, timetable))
+      throw new BadRequestException('Lecture time conflict');
+
+    return this.timetableRepository.addLectureToTimetable(timetableId, lectureId);
   }
 
   private checkLectureTimeConflict(lecture: LecturewithClassTimes, timetable: TimetableWithLectureTimes) {
     // TODO: 여기에 시간 충돌 검사 로직을 구현하세요.
-    return false;
+    return lecture.classTimes.some(newTime => 
+      timetable.lectures.some(lec =>
+        lec.classTimes.some(existingTime =>
+          this.checkClasstimeOverlap(existingTime, newTime)
+        )
+      )
+    );
   }
 
   private checkClasstimeOverlap(a: ClassTime, b: ClassTime) {
     // TODO: 여기에 두 수업 시간 겹침 판단 로직을 구현하세요.
-    return false;
+    if(a.day != b.day)return false;
+    return a.startTime < b.endTime && a.endTime > b.startTime;
   }
 
   async removeLectureFromTimetableForUser(userId: number, timetableId: number, lectureId: number) {
