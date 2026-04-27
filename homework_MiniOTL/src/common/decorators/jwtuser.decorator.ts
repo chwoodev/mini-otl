@@ -21,5 +21,6 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 // =============================================================================
 export const JWTUser = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
   // TODO: 요청 객체에서 user 정보를 추출하여 반환하세요.
-  return null;
+  const req = ctx.switchToHttp().getRequest();
+  return req.user;
 });
