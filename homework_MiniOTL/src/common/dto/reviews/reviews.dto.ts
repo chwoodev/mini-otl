@@ -88,7 +88,7 @@ export const toReviewDTO =
       grade: review.grade,
       load: review.load,
       speech: review.speech,
-      mine: false,           // TODO: currentUserId와 비교
+      mine: currentUserId !== undefined && currentUserId === review.userId,           // TODO: currentUserId와 비교
     });
 
 export type ReviewWithLikesDTO = ReviewDTO & { likes: number, myLike: boolean };
@@ -98,7 +98,7 @@ export const toReviewWithLikesDTO = (currentUserId?: number) => {
   return (review: ReviewWithLikes): ReviewWithLikesDTO => ({
     // TODO: toReview를 스프레드하고 likes와 myLike를 추가하세요.
     ...toReview(review),
-    likes: 0,              // TODO: review._count.likedUsers
-    myLike: false,         // TODO: review.liked
+    likes: review._count.likedUsers,              // TODO: review._count.likedUsers
+    myLike: review.liked,         // TODO: review.liked
   });
 };
