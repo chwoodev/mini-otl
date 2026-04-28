@@ -90,6 +90,15 @@ import { ReviewCreateInput, ReviewUpdateInput, ReviewWithLikes } from './reposit
 // 힌트: userId가 있으면 해당 사용자의 좋아요 여부도 조회합니다.
 const reviewWithLikeSelect = (userId?: number) => ({
   id: true,
+  lectureId: true,
+  userId: true,
+  content: true,
+  grade: true,
+  load: true,
+  speech: true,
+  isDeleted: true,
+  likedUsers: userId ? { select: { id: true }, where: { id: userId } } : undefined,
+  _count: { select: { likedUsers: true } },
 });
 
 // TODO: toReviewWithLikes 제네릭 함수를 구현하세요.
@@ -99,12 +108,18 @@ function toReviewWithLikes<
 >(review: T): T extends null ? ReviewWithLikes | null : ReviewWithLikes {
   if (!review) return null as T extends null ? null : ReviewWithLikes;
   // TODO: liked와 _count를 추가한 객체를 반환하세요.
-  return { ...review } as any;
+  return {
+    ...review,
+    liked: !!review.likedUsers?.length,
+    _count: {
+      likedUsers: review._count?.likedUsers ?? 0,
+    },
+  };
 }
 
 @Injectable()
 export class ReviewRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async checkUserReviewExistsForLecture(userId: number, lectureId: number): Promise<boolean> {
     // TODO: 사용자가 해당 강의에 리뷰를 작성했는지 확인하세요.
