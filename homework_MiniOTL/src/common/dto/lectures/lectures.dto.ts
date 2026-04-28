@@ -46,16 +46,20 @@ export function toLectureWithProfessorResponseDTO(
   course: LectureWithProfessorClassTimes,
 ): LectureWithProfessorResponseDTO {
   // TODO: 강의 + 교수 + 수업시간 정보를 DTO로 변환하세요.
+  const reviewCount = course.reviewCount;
+  const grade = reviewCount>0?course.sumGrade/reviewCount:0;
+  const load = reviewCount>0?course.sumLoad/reviewCount:0;
+  const speech = reviewCount>0?course.sumSpeech/reviewCount:0;
   return {
     id: course.id,
     courseId: course.courseId,
     year: course.year,
     season: course.season,
-    professor: {} as any,  // TODO: toSimpleProfessorResponseDTO
-    grade: 0,              // TODO: 평균 계산
-    load: 0,               // TODO
-    speech: 0,             // TODO
-    classTimes: [],        // TODO: map(toClassTimeResponseDTO)
+    professor: toSimpleProfessorResponseDTO(course.professor),  // TODO: toSimpleProfessorResponseDTO
+    grade,              // TODO: 평균 계산
+    load,               // TODO
+    speech,             // TODO
+    classTimes: course.classTimes.map(toClassTimeResponseDTO),        // TODO: map(toClassTimeResponseDTO)
   };
 }
 
@@ -71,13 +75,17 @@ export type TimetableLectureItemDTO = {
 
 export function toTimetableLectureItemDTO(lecture: LectureWithCourseProfessorClasstime): TimetableLectureItemDTO {
   // TODO: 시간표용 강의 아이템 DTO로 변환하세요.
+  const reviewCount = lecture.reviewCount;
+  const grade = reviewCount>0?lecture.sumGrade/reviewCount:0;
+  const load = reviewCount>0?lecture.sumLoad/reviewCount:0;
+  const speech = reviewCount>0?lecture.sumSpeech/reviewCount:0;
   return {
     id: lecture.id,
-    course: {} as any,     // TODO: courseWithDeptToCourseDTO
-    professor: {} as any,  // TODO: toSimpleProfessorResponseDTO
-    grade: 0,              // TODO: 평균 계산
-    load: 0,               // TODO
-    speech: 0,             // TODO
-    classTimes: [],        // TODO: map(toClassTimeResponseDTO)
+    course: courseWithDeptToCourseDTO(lecture.course),     // TODO: courseWithDeptToCourseDTO
+    professor: toSimpleProfessorResponseDTO(lecture.professor),  // TODO: toSimpleProfessorResponseDTO
+    grade,              // TODO: 평균 계산
+    load,               // TODO
+    speech,             // TODO
+    classTimes: lecture.classTimes.map(toClassTimeResponseDTO),        // TODO: map(toClassTimeResponseDTO)
   };
 }
