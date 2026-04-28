@@ -52,19 +52,23 @@ export type CourseResponseDTO = {
 export function courseWithDeptToCourseDTO(course: CourseWithDept): CourseResponseDTO {
   // TODO: CourseWithDept를 CourseResponseDTO로 변환하세요.
   // courseCode = deptCode + courseNumCode, grade/load/speech = sum / reviewCount (0으로 나누기 방지)
+  const reviewCount = course.reviewCount;
+  const grade = reviewCount>0?course.sumGrade/reviewCount:0;
+  const load = reviewCount>0?course.sumLoad/reviewCount:0;
+  const speech = reviewCount>0?course.sumSpeech/reviewCount:0;
   return {
     id: course.id,
     nameKo: course.nameKo,
     nameEn: course.nameEn,
-    courseCode: '',        // TODO
+    courseCode: `${course.department.deptCode}${course.courseNumCode}`,        // TODO
     courseNumCode: course.courseNumCode,
     lectureTime: course.lectureTime,
     labTime: course.labTime,
     credit: course.credit,
-    department: {} as any, // TODO
-    grade: 0,              // TODO
-    load: 0,               // TODO
-    speech: 0,             // TODO
+    department: toDepartmentDTO(course.department), // TODO
+    grade,              // TODO
+    load,               // TODO
+    speech,             // TODO
   };
 }
 
@@ -73,9 +77,11 @@ export function toCourseWithUnseenReviewDTO(
   course: CourseWithDeptAndLastSeenReview,
 ): CourseWithUnseenReviewResponseDTO {
   // TODO: 안 읽은 리뷰가 있는지 계산하여 반환하세요.
+  const lastSeenId = course.userLastSeenReviewOnCourse?.[0]?.lastSeenReviewId ?? 0;
+  const lastReviewId = course.lastReviewId ?? 0;
   return {
     ...courseWithDeptToCourseDTO(course),
-    unseenReview: false,   // TODO
+    unseenReview: lastReviewId > lastSeenId,   // TODO
   };
 }
 
@@ -85,7 +91,7 @@ export function toCourseWithLecturesDTO(course: CourseWithIncludes): CourseWithL
   // TODO: 강의 목록을 포함하여 변환하세요.
   return {
     ...courseWithDeptToCourseDTO(course),
-    lectures: [],          // TODO
+    lectures: course.lectures.map(toLectureWithProfessorResponseDTO),          // TODO
   };
 }
 
