@@ -138,7 +138,7 @@ export class CoursesController {
   @Public()
   async getCourses(@Query() filter: CourseFindQueryDTO, @JWTUser() user?: JWTPayload) {
     const courses = await this.coursesService.findFiltered(filter, user?.id);
-    if (isCourseWithDeptAndLastSeenReview(courses)) return courses.map(toCourseWithUnseenReviewDTO);
+    if (isCourseWithDeptAndLastSeenReviewArray(courses)) return courses.map(toCourseWithUnseenReviewDTO);
     return courses.map(courseWithDeptToCourseDTO);
   }
 
