@@ -6,5 +6,5 @@
 
 */
 -- AlterTable
-ALTER TABLE `User` DROP COLUMN `password`,
-    ADD COLUMN `encryptedPassword` VARCHAR(191) NOT NULL;
+-- ALTER TABLE `User` DROP COLUMN `password`,
+--     ADD COLUMN `encryptedPassword` VARCHAR(191) NOT NULL;

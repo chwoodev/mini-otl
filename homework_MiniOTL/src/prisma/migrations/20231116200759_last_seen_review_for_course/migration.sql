@@ -1,5 +1,5 @@
 -- AlterTable
-ALTER TABLE `Course` ADD COLUMN `lastReviewId` INTEGER NULL;
+-- ALTER TABLE `Course` ADD COLUMN `lastReviewId` INTEGER NULL;
 
 -- CreateTable
 CREATE TABLE `UserLastSeenReviewOnCourse` (

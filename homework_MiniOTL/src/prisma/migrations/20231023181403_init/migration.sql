@@ -2,11 +2,12 @@
 CREATE TABLE `User` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `email` VARCHAR(191) NOT NULL,
-    `password` VARCHAR(191) NOT NULL,
+    `encryptedPassword` VARCHAR(191) NOT NULL,
     `firstName` VARCHAR(191) NOT NULL,
     `lastName` VARCHAR(191) NOT NULL,
     `departmentId` INTEGER NOT NULL,
     `isAdmin` BOOLEAN NOT NULL DEFAULT false,
+    `refreshToken` VARCHAR(191) NULL,
 
     UNIQUE INDEX `User_email_key`(`email`),
     PRIMARY KEY (`id`)
@@ -44,6 +45,7 @@ CREATE TABLE `Course` (
     `sumLoad` INTEGER NOT NULL DEFAULT 0,
     `sumSpeech` INTEGER NOT NULL DEFAULT 0,
     `reviewCount` INTEGER NOT NULL DEFAULT 0,
+    `lastReviewId` INTEGER NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
