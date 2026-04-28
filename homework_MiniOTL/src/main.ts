@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import * as cookieParser from 'cookie-parser';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -24,7 +24,7 @@ import { requestLogMiddlware } from './requestLog.middleware';
 async function bootstrap() {
   // TODO: NestJS 앱을 생성하고 미들웨어/파이프를 설정하세요.
   const app = await NestFactory.create(AppModule);
-  app.use(cookieParser);
+  app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
   const configService = app.get(ConfigService);
