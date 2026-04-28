@@ -63,4 +63,70 @@ export class UserTimetablesController {
   // ===========================================================================
 
   // TODO: 여기에 5개의 엔드포인트를 구현하세요.
+
+  @UseGuards(JwtAuthGuard)
+  @Post()
+  async createTimetable(
+    @JWTUser() user: JWTPayload, 
+    @Body() body: CreateTimetableBodyDTO,
+    @Param('userId') userId: number
+  ){
+    if(user.id != userId)
+      throw new ForbiddenException('You can only get your own timetables');
+    const timetable = await this.timetablesService.createTimetableForUser({ userId: user.id, ...body });
+    return toTimetableWithLecturesDTO({...timetable, lectures: []});
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  async getTimetable(
+    @JWTUser() user: JWTPayload,
+    @Param('userId') userId: number
+  ){
+    if(user.id != userId)
+      throw new ForbiddenException('You can only get your own timetables');
+    const timetables = await this.timetablesService.getUserTimetablesWithLectures(user.id);
+    return timetables.map(toTimetableWithLecturesDTO);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':timetableId')
+  async getTimetableById(
+    @JWTUser() user: JWTPayload,
+    @Param('userId') userId: number,
+    @Param('timetableId') timetableId: number
+  ){
+    if(user.id != userId)
+      throw new ForbiddenException('You can only get your own timetables');
+    const timetable = await this.timetablesService.getUserTimetableWithLectureById(user.id, timetableId);
+    return toTimetableWithLecturesDTO(timetable);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':timetableId/lectures/:lectureId')
+  async createLecture(
+    @JWTUser() user: JWTPayload,
+    @Param('userId') userId: number,
+    @Param('timetableId') timetableId: number,
+    @Param('lectureId') lectureId: number
+  ){
+    if(user.id != userId)
+      throw new ForbiddenException('You can only add lectures to your own timetable');
+    const timetable = await this.timetablesService.addLectureToTimetableForUser(user.id, timetableId, lectureId);
+    return toTimetableWithLecturesDTO(timetable);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':timetableId/lectures/:lectureId')
+  async removeLecture(
+    @JWTUser() user: JWTPayload,
+    @Param('userId') userId: number,
+    @Param('timetableId') timetableId: number,
+    @Param('lectureId') lectureId: number
+  ){
+    if(user.id != userId)
+      throw new ForbiddenException('You can only remove lectures from your own timetable');
+    const timetable = await this.timetablesService.removeLectureFromTimetableForUser(user.id, timetableId, lectureId);
+    return toTimetableWithLecturesDTO(timetable);
+  }
 }
