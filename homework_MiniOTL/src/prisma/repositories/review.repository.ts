@@ -123,61 +123,121 @@ export class ReviewRepository {
 
   async checkUserReviewExistsForLecture(userId: number, lectureId: number): Promise<boolean> {
     // TODO: 사용자가 해당 강의에 리뷰를 작성했는지 확인하세요.
-    return false;
+    const review = await this.prisma.review.findFirst({
+      where: {userId, lectureId, isDeleted: false}
+    });
+    return review !== null;
   }
 
   async createReview(data: ReviewCreateInput): Promise<Review> {
     // TODO: 리뷰를 생성하세요. FK 제약 조건 에러를 처리하세요.
-    return {} as any;
+    try{
+      return await this.prisma.review.create({data});
+    }catch(e){
+      if(e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2003'){
+        const fieldName = e.meta?.field_name as string;
+        if(fieldName.includes('lectureId'))
+          throw new NotFoundException('Lecture not found');
+        if(fieldName.includes('userId'))
+          throw new NotFoundException('User not found');
+      }
+      throw e;
+    }
   }
 
   async updateReview(id: number, data: ReviewUpdateInput): Promise<Review> {
     // TODO: content, grade, load, speech만 업데이트하세요. isDeleted: false인 것만.
-    return {} as any;
+    const {content,grade,load,speech} = data;
+    return await this.prisma.review.update({
+      where: {id, isDeleted: false},
+      data: {content, grade, load, speech}
+    });
   }
 
   async getReviewById(id: number): Promise<Review | null> {
     // TODO: ID로 리뷰를 조회하세요. isDeleted: false 조건 포함.
-    return null;
+    return await this.prisma.review.findUnique({
+      where: {id, isDeleted: false}
+    });
   }
 
   async getReviewWithLikesById(id: number, userId?: number): Promise<ReviewWithLikes | null> {
     // TODO: 좋아요 정보 포함 리뷰 조회. toReviewWithLikes 활용.
-    return null;
+    const review = await this.prisma.review.findUnique({
+      where: {id, isDeleted: false},
+      select: reviewWithLikeSelect(userId)
+    });
+    return toReviewWithLikes(review);
   }
 
   async getReviewsWithLikesByLectureId(lectureId: number, userId?: number): Promise<ReviewWithLikes[]> {
     // TODO: 강의별 리뷰 목록 조회. findMany + map(toReviewWithLikes).
-    return [];
+    const reviews = await this.prisma.review.findMany({
+      where: {lectureId, isDeleted: false},
+      select: reviewWithLikeSelect(userId)
+    });
+    return reviews.map(toReviewWithLikes);
   }
 
   async getReviewsWithLikesByCourseId(courseId: number, userId?: number): Promise<ReviewWithLikes[]> {
     // TODO: 과목별 리뷰 목록 조회. lecture: { courseId }로 관계 필터링.
-    return [];
+    const reviews = await this.prisma.review.findMany({
+      where:{ 
+        lecture: {courseId},
+        isDeleted: false
+      },
+      select: reviewWithLikeSelect(userId)
+    });
+    return reviews.map(toReviewWithLikes);
   }
 
   async getReviewsWithLikesByUserId(userId: number): Promise<ReviewWithLikes[]> {
     // TODO: 사용자별 리뷰 목록 조회.
-    return [];
+    const reviews = await this.prisma.review.findMany({
+      where:{userId, isDeleted: false},
+      select: reviewWithLikeSelect(userId)
+    });
+    return reviews.map(toReviewWithLikes);
   }
 
   async getReviewsWithLikesLikedByUser(userId: number): Promise<ReviewWithLikes[]> {
     // TODO: 사용자가 좋아요한 리뷰 목록. likedUsers: { some: { id: userId } }.
-    return [];
+    const reviews = await this.prisma.review.findMany({
+      where: {likedUsers:{some:{id:userId}}, isDeleted: false},
+      include: {_count:{select: {likedUsers: true}}}
+    });
+    return reviews.map((d) => ({ ...d, liked: true }));
   }
 
   async likeReview(reviewId: number, userId: number): Promise<ReviewWithLikes> {
     // TODO: M:N 관계에서 connect로 좋아요 연결.
-    return {} as any;
+    const review = await this.prisma.review.update({
+      where: {id: reviewId, isDeleted: false},
+      data: {
+        likedUsers: {connect: {id:userId}}
+      },
+      select: reviewWithLikeSelect(userId)
+    });
+    return toReviewWithLikes(review);
   }
 
   async unlikeReview(reviewId: number, userId: number): Promise<ReviewWithLikes> {
     // TODO: M:N 관계에서 disconnect로 좋아요 해제.
-    return {} as any;
+    const review = await this.prisma.review.update({
+      where: {id: reviewId, isDeleted: false},
+      data: {
+        likedUsers: {disconnect: {id:userId}}
+      },
+      select: reviewWithLikeSelect(userId)
+    });
+    return toReviewWithLikes(review);
   }
 
   async deleteReview(id: number): Promise<Review> {
     // TODO: 소프트 딜리트 - isDeleted: true로 업데이트.
-    return {} as any;
+    return await this.prisma.review.update({
+      where: {id, isDeleted: false},
+      data: {isDeleted: true}
+    });
   }
 }
